@@ -53,10 +53,10 @@ public class SwipeServlet extends HttpServlet {
 
       // TODO: isSwiperValid method probably should not be in this class...?
       if (!this.isSwiperValid(swipeDetails.getSwiper())) {
-        responseMsg.setMessage("User not found: invalid swiper id ");
+        responseMsg.setMessage("User not found: invalid swiper id: "+ swipeDetails.getSwiper());
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       } else if (!this.isSwipeeValid(swipeDetails.getSwipee())) {
-        responseMsg.setMessage("User not found: invalid swipee id");
+        responseMsg.setMessage("User not found: invalid swipee id: " + swipeDetails.getSwipee());
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       } else if (!this.isCommentValid(swipeDetails.getComment())) {
         responseMsg.setMessage("Invalid inputs: comment cannot exceed 256 characters");
@@ -89,12 +89,12 @@ public class SwipeServlet extends HttpServlet {
 
   private boolean isSwiperValid(String id) {
     int id_int = Integer.parseInt(id);
-    return 1 < id_int && id_int < MAX_SWIPER_ID ;
+    return 1 <= id_int && id_int <= MAX_SWIPER_ID ;
   }
 
   private boolean isSwipeeValid(String id) {
     int id_int = Integer.parseInt(id);
-    return 1 < id_int && id_int < MAX_SWIPEE_ID ;
+    return 1 <= id_int && id_int <= MAX_SWIPEE_ID ;
   }
   private boolean isCommentValid(String comment) {
     return comment.length() <= MAX_COMMENT_LEN;

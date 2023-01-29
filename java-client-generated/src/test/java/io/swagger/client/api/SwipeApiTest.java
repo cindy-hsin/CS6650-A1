@@ -62,7 +62,7 @@ public class SwipeApiTest {
             ApiResponse res = swipeApi.swipeWithHttpInfo(body, leftorright);
             System.out.println(Integer.toString(res.getStatusCode()) + ": " + res.getData());
         } catch (ApiException e) {
-            System.out.println(e.getCode() + ": " + e.getResponseBody());
+            System.out.println("Failed: " + e.getCode() + ": " + e.getResponseBody());
         }
 
 
