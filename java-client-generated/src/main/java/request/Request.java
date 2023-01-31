@@ -1,4 +1,4 @@
-package producerconsumer;
+package request;
 
 import io.swagger.client.model.SwipeDetails;
 
