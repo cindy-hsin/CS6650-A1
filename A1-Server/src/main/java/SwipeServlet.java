@@ -24,6 +24,7 @@ public class SwipeServlet extends HttpServlet {
     // check we have a URL!
     if (urlPath == null || urlPath.isEmpty()) {
       responseMsg.setMessage("missing path parameter");
+
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       response.getOutputStream().print(gson.toJson(responseMsg));
       response.getOutputStream().flush();
