@@ -8,6 +8,6 @@ public class LoadTestConfig {
 
   // remote: "http://xxxx:8080/A1-Server_war";
   // local: "http://localhost:8080/A1_Server_war_exploded"
-  public static final String URL = "http://35.164.233.96:8080/A1-Server_war/";
+  public static final String URL = "http://18.236.93.232:8080/A1-Server_war/";
 
 }

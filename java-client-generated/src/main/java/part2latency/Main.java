@@ -1,10 +1,10 @@
 package part2latency;
 
 
-
 import config.LoadTestConfig;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,18 +24,25 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 public class Main {
   private static final int QUEUE_CAPACITY = LoadTestConfig.NUM_THREADS;
-  private static final String CSV_FILE_NAME = "AllRecords.csv";
+  private static final String ALL_RECORDS_CSV = "AllRecords.csv";
+  private static final String START_TIME_GROUP_CSV = "StartTimeGroupedRequests.csv";
   private static final RunningMetrics runningMetrics = new RunningMetrics();
 
-  public static void main(String[] args) throws InterruptedException {
+  private static Long startTime, endTime;
+
+  public static void main(String[] args) throws InterruptedException, CsvExistException {
     CountDownLatch latch = new CountDownLatch(LoadTestConfig.NUM_THREADS);
     final AtomicInteger numSuccessfulReqs = new AtomicInteger(0);
     final AtomicInteger numFailedReqs = new AtomicInteger(0);
 
     BlockingQueue<Pair> recordsBuffer = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
 
-    Long startTime = System.currentTimeMillis();
-    Long endTime = null;
+    startTime = System.currentTimeMillis();
+    endTime = null;
+
+    if (new File(ALL_RECORDS_CSV).isFile()) {
+      throw new CsvExistException(ALL_RECORDS_CSV);
+    }
 
     for (int i = 0; i < LoadTestConfig.NUM_THREADS; i++) {
       Runnable thread = new SendRequestAverageThread(latch, numSuccessfulReqs, numFailedReqs, recordsBuffer);
@@ -51,7 +59,7 @@ public class Main {
         Pair threadRecords = recordsBuffer.take(); // Might throw InterruptedException
         numRecordListsTaken ++;
         // System.out.println("Taken thread records from queue: " + threadRecords.getThreadId() + ": " + threadRecords.getRecords().size());
-        // For each record: Update, max, min, sum; Add frequency to corresponding latency group
+        // For each record: Update, max, min, sum; increment count to time group (starting at which second)
         updateRunningMetrics(threadRecords.getRecords());
         inMemoryAllRecords.add(threadRecords);
         // numWrittenRecords.put(threadRecords.getThreadId(),
@@ -63,7 +71,7 @@ public class Main {
       }
     }
 
-    readCsvToGroup();
+
     // endTime might contain one unnecessary FileWrite time.
     // CASE1:
     // When the Last thread put a list to queue and call latch.countDown(),
@@ -77,13 +85,19 @@ public class Main {
     // In this case, the endTime will be longer than the actual request-sending endTime, by a difference of
     // WRITE_ONE_LIST_TO_CSV TIME.
 
+    readCsvToGroupLatency();     // Group records by latency bucket
+
+    // Write the startTimeGroupCount out to CSV for plotting
+
+    writeToCsvByStartTime(runningMetrics.getStartTimeGroupCount());
+
+
     System.out.println("Num of Threads: " + LoadTestConfig.NUM_THREADS);
 //    System.out.println("StartTime: " + startTime);
 //    System.out.println("EndTime: " + endTime);
     System.out.println("Multi-threaded Wall Time:" + (endTime - startTime) + "ms");
     System.out.println("Successful Requests:" + numSuccessfulReqs);
     System.out.println("Unsuccessful Requests:" + numFailedReqs);
-
 
 
     System.out.println("Mean Response Time (ms): " + (float)runningMetrics.getSumLatency() / runningMetrics.getNumTotalRecord());
@@ -117,36 +131,6 @@ public class Main {
     System.out.println(ds.getPercentile(50));
     System.out.print(ds.getPercentile(99));
 
-//    // Calculate inMemory Collection's number of records
-//    int inMemoryTotalRecords = 0;
-//    for (Pair pair: inMemoryAllRecords) {
-//      inMemoryTotalRecords += pair.getRecords().size();
-//    }
-
-
-//    try (BufferedWriter outputFile = new BufferedWriter(new FileWriter("AllRecordsFromMemory.csv"))){
-//
-//      String line;
-//      for (Pair pair: inMemoryAllRecords) {
-//        for (Record record: pair.getRecords()) {
-//          line = record.toString() + "," + pair.getThreadId();
-//          outputFile.write(line + System.lineSeparator());
-//        }
-//        System.out.println("From Memory Collection: Finished writing records of thread:" + pair.getThreadId());
-//
-//      }
-//    } catch (FileNotFoundException fnfe) {
-//      System.out.println("*** CSV file was not found : " + fnfe.getMessage());
-//      fnfe.printStackTrace();
-//    } catch (IOException ioe) {
-//      System.out.println("Error when writing to CSV : " + ioe.getMessage());
-//      ioe.printStackTrace();
-//    }
-
-
-    // System.out.println("Write from queue, written record cnt(each thread): " + numWrittenRecords);
-    // System.out.println("Write from memory collection, written record cnt(all threads):" + inMemoryTotalRecords);
-
   }
 
   private static void updateRunningMetrics(List<Record> records) {
@@ -157,6 +141,7 @@ public class Main {
         runningMetrics.setMaxLatency(Math.max(curLatency, runningMetrics.getMaxLatency()));
         runningMetrics.setSumLatency(runningMetrics.getSumLatency() + curLatency);
         runningMetrics.setNumTotalRecord(runningMetrics.getNumTotalRecord() + 1);
+        runningMetrics.incrementStartTimeGroupCount(startTime, record.getStartTime());
       }
     }
   }
@@ -191,8 +176,7 @@ public class Main {
   private static void writeAllRecords(String threadId, List<Record> records) {
     System.out.println("From Queue: Started writing records of thread:" + threadId);
 //    int numRecordsInThread = 0;
-
-    try (BufferedWriter outputFile = new BufferedWriter(new FileWriter(CSV_FILE_NAME, true))) {
+    try (BufferedWriter outputFile = new BufferedWriter(new FileWriter(ALL_RECORDS_CSV, true))) {
       String line;
 
       for (Record record: records) {
@@ -200,13 +184,11 @@ public class Main {
         outputFile.write(line + System.lineSeparator());
 //        numRecordsInThread ++;
       }
-
-
     } catch (FileNotFoundException fnfe) {
       System.out.println("*** Write: CSV file was not found : " + fnfe.getMessage());
       fnfe.printStackTrace();
     } catch (IOException ioe) {
-      System.out.println("Error when writing to CSV : " + ioe.getMessage());
+      System.out.println("Error when writing to CSV " + ALL_RECORDS_CSV + ": " + ioe.getMessage());
       ioe.printStackTrace();
     }
 
@@ -215,8 +197,8 @@ public class Main {
 
   }
 
-  private static void readCsvToGroup() {
-    try (BufferedReader inputFile = new BufferedReader(new FileReader(CSV_FILE_NAME))) {
+  private static void readCsvToGroupLatency() {
+    try (BufferedReader inputFile = new BufferedReader(new FileReader(ALL_RECORDS_CSV))) {
 
       String line;
       while ((line = inputFile.readLine()) != null) {
@@ -232,11 +214,32 @@ public class Main {
       System.out.println("*** Read: CSV file was not found : " + fnfe.getMessage());
       fnfe.printStackTrace();
     } catch (IOException ioe) {
-      System.out.println("Error when reading CSV : " + ioe.getMessage());
+      System.out.println("Error when reading CSV " + ALL_RECORDS_CSV + ": " + ioe.getMessage());
       ioe.printStackTrace();
     }
   }
-    //  private void writeToCSVByStartTime(List<Record> records) {
+
+
+  private static void writeToCsvByStartTime(Map<Integer, Integer> startTimeGroupCount) {
+    Map<Integer, Integer> sortedMap = new TreeMap<>(startTimeGroupCount);  // sort by key(second from programStartTime)
+
+    try (BufferedWriter outputFile = new BufferedWriter(new FileWriter(START_TIME_GROUP_CSV))) {
+      String line;
+
+      for (Integer second: sortedMap.keySet()) {
+        line = second + "," + sortedMap.get(second);
+        outputFile.write(line + System.lineSeparator());
+      }
+    } catch (FileNotFoundException fnfe) {
+      System.out.println("*** CSV file was not found : " + fnfe.getMessage());
+      fnfe.printStackTrace();
+    } catch (IOException ioe) {
+      System.out.println("Error when writing to CSV : " + ioe.getMessage());
+      ioe.printStackTrace();
+    }
+  }
+
+  //  private void writeToCSVByStartTime(List<Record> records) {
 //    try (BufferedReader inputFile =new BufferedReader(new FileReader("country_codes.csv"));
 //        BufferedWriter outputFile = new BufferedWriter(new FileWriter("country_code.out.csv"))) {
 //      List<String> lines

@@ -7,17 +7,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RunningMetrics {
-
   protected static final int NUM_BUCKET = 10000;
   private int minLatency = new Double(POSITIVE_INFINITY).intValue();
   private int  maxLatency = new Double(NEGATIVE_INFINITY).intValue();
   private int sumLatency = 0;
-
   private int numTotalRecord = 0;
-
   private int[] latencyGroupCount = new int[NUM_BUCKET];
-
   private float bucketSize;
+
+  private Map<Integer, Integer> startTimeGroupCount = new HashMap<>();
+
+
 
   public int getMinLatency() {
     return minLatency;
@@ -72,5 +72,19 @@ public class RunningMetrics {
       throw new RuntimeException("Max & Min Latency haven't been set yet");
     }
     return this.bucketSize;
+  }
+
+
+  public void incrementStartTimeGroupCount(long programStartTime, long recordStartTime) {
+    int second = (int) Math.floor((recordStartTime - programStartTime) / 1000f);
+    if (this.startTimeGroupCount.containsKey(second)) {
+      this.startTimeGroupCount.put(second, this.startTimeGroupCount.get(second) + 1);
+    } else {
+      this.startTimeGroupCount.put(second, 1);
+    }
+  }
+
+  public Map<Integer, Integer> getStartTimeGroupCount() {
+    return this.startTimeGroupCount;
   }
 }
