@@ -3,13 +3,12 @@ package part2latency;
 import config.LoadTestConfig;
 import io.swagger.client.ApiClient;
 import io.swagger.client.api.SwipeApi;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import request.RequestUtil;
+import request.RequestGenerator;
 
 
 public class SendRequestAverageThread implements Runnable{
@@ -37,9 +36,9 @@ public class SendRequestAverageThread implements Runnable{
     SwipeApi swipeApi = new SwipeApi(apiClient);
     List<Record> records = new ArrayList<>();
     // Send multiple requests
-    //Each thread averagely sends fixed amount of request.
+    // Each thread averagely sends fixed amount of request.
     for (int i = 0; i < LoadTestConfig.NUM_TOTAL_REQUESTS / LoadTestConfig.NUM_THREADS; i++) {
-      Record record = RequestUtilWithTimestamp.sendSingleRequest(RequestUtil.generateSingleRequest(), swipeApi, this.numSuccessfulReqs, this.numFailedReqs);
+      Record record = RequestUtilWithTimestamp.sendSingleRequest(RequestGenerator.generateSingleRequest(), swipeApi, this.numSuccessfulReqs, this.numFailedReqs);
       records.add(record);
     }
 

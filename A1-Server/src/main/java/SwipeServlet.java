@@ -63,7 +63,7 @@ public class SwipeServlet extends HttpServlet {
         responseMsg.setMessage("Invalid inputs: comment cannot exceed 256 characters");
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       } else {
-        responseMsg.setMessage("Write successful");
+        responseMsg.setMessage("Write successful!");
         response.setStatus(HttpServletResponse.SC_CREATED);
       }
 

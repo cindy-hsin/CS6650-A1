@@ -1,12 +1,10 @@
 package producerconsumer;
 
-import io.swagger.client.model.SwipeDetails;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import request.Request;
-import request.RequestUtil;
+import request.RequestGenerator;
 
 /**
  * Generate the request and store into a BlockingQueue
@@ -30,7 +28,7 @@ public class Producer implements Runnable{
     int i = 0;
     while (i < this.targetNumReqs) {
       try {
-        Request request = RequestUtil.generateSingleRequest();
+        Request request = RequestGenerator.generateSingleRequest();
         this.buffer.put(request);
         i ++;
         System.out.println("Thread:" + Thread.currentThread().getName() + Thread.currentThread().getId()+ " just put a request to buffer. Success cnt: " + this.numSuccessfulReqs.get() +
@@ -40,8 +38,7 @@ public class Producer implements Runnable{
         e.printStackTrace();
       }
     }
-    System.out.println("Producer while loop ends");
+
     this.latch.countDown();
-    System.out.println("Producer thread should be closed, latch count: " + this.latch.getCount());
   }
 }

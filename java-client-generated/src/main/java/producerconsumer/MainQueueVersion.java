@@ -12,12 +12,12 @@ public class MainQueueVersion {
   private static final int NUM_PRODUCER_THREAD = 1;
   private static final int NUM_CONSUMER_THREAD = LoadTestConfig.NUM_THREADS - NUM_PRODUCER_THREAD;
   public static void main(String[] args) throws InterruptedException {
-    // Stop condition for Producer Thread: When 50K requests have been successfully pushed to queue
-    // Stop condition for Consumer Threads: When 50K requests have been successfully sent
+    // Stop condition for Producer Thread: When 500K requests have been successfully pushed to queue
+    // Stop condition for Consumer Threads: When 500K requests have been successfully sent
     final AtomicInteger numSuccessfulReqs = new AtomicInteger(0);
     final AtomicInteger numFailedReqs = new AtomicInteger(0);
 
-    // 1 wait many!
+    // 1 Wait Many Latch!
     CountDownLatch pLatch = new CountDownLatch(NUM_PRODUCER_THREAD);
     CountDownLatch cLatch = new CountDownLatch(NUM_CONSUMER_THREAD);
     BlockingQueue<Request> buffer = new LinkedBlockingQueue<>(QUEUE_CAPACITY);

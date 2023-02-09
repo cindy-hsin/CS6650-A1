@@ -11,7 +11,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -238,48 +237,4 @@ public class Main {
       ioe.printStackTrace();
     }
   }
-
-  //  private void writeToCSVByStartTime(List<Record> records) {
-//    try (BufferedReader inputFile =new BufferedReader(new FileReader("country_codes.csv"));
-//        BufferedWriter outputFile = new BufferedWriter(new FileWriter("country_code.out.csv"))) {
-//      List<String> lines
-//      inputFile
-//
-//    } catch (FileNotFoundException fnfe) {
-//      System.out.println("*** CSV file was not found : " + fnfe.getMessage());
-//      fnfe.printStackTrace();
-//    } catch (IOException ioe) {
-//      System.out.println("Error when writing to CSV : " + ioe.getMessage());
-//      ioe.printStackTrace();
-//    }
-//
-//  }
-
-
-  //  List<String> lines = Files.readAllLines(file.toPath());
-//lines.set(line, dataType.toUpperCase() + ":" + newData);
-//Files.write(file.toPath(), lines); // You can add a charset and other options too
-
-
-
-
-//  I suggest reading the whole file into a variable (string, array or list). You can easily modify specific lines then and write everything back to the file.
-//
-//      1) Reading File into an array: Store text file content line by line into array
-//
-//2) Manipulate array:
-//
-//      for (int i = 0; i < lines.length; i++) {
-//    String line = lines[i];
-//    if (line.contains("Done")) {
-//      lines[i] = line + "\nCHECK!\n";
-//      break;
-//    }
-//  }
-//3) Write string array to file: Writing a string array to file using Java - separate lines
-//
-//  The problem also can be related to this line:
-//
-//      writer.write("\nCHECK!\n");
-//  the first "\n" forces the "CHECK" to be written in a new line. This assumes that your "Done" line is the last line and does not end with "\n".
 }

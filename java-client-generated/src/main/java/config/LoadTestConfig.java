@@ -6,8 +6,10 @@ public class LoadTestConfig {
 
   public static final int SUCCESS_CODE = 201;
 
+  public static final int MAX_RETRY = 5;
+
   // remote: "http://xxxx:8080/A1-Server_war";
   // local: "http://localhost:8080/A1_Server_war_exploded"
-  public static final String URL = "http://18.236.93.232:8080/A1-Server_war/";
+  public static final String URL = "http://54.191.169.180:8080/A1-Server_war/";
 
 }

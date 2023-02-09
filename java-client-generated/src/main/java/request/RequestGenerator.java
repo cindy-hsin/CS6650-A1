@@ -1,13 +1,9 @@
 package request;
 
-import io.swagger.client.ApiException;
-import io.swagger.client.ApiResponse;
-import io.swagger.client.api.SwipeApi;
 import io.swagger.client.model.SwipeDetails;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public class RequestUtil {
+public class RequestGenerator {
   private static final String[] SWIPE_VALUES = new String[]{"left", "right"};
   private static final int MIN_ID = 1;
   private static final int MAX_SWIPER_ID = 5000;
@@ -18,7 +14,7 @@ public class RequestUtil {
   private static final String ALPHA_NUMERIC_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
       + "0123456789"
       + "abcdefghijklmnopqrstuvxyz";
-  private static final int MAX_RETRY = 5;
+//  private static final int MAX_RETRY = 5;
 
 
   // ThreadLocalRandom rather than shared Random objects in concurrent programs will encounter less overhead and contention
@@ -67,26 +63,26 @@ public class RequestUtil {
     return String.valueOf(ThreadLocalRandom.current().nextInt(MIN_ID, MAX_SWIPEE_ID+1));
   }
 
-  /**
-   * Execute a single POST request. If failed, retry up to 5 times before counting it as a failed request.
-   * */
-  public static void sendSingleRequest(Request request, SwipeApi swipeApi, AtomicInteger numSuccessfulReqs, AtomicInteger numFailedReqs) {
-    int retry = MAX_RETRY;
-
-    while (retry > 0) {
-      try {
-        ApiResponse res = swipeApi.swipeWithHttpInfo(request.getBody(), request.getSwipeDir());
-        // System.out.println(res.getStatusCode() + ": " + res.getData());
-        numSuccessfulReqs.getAndIncrement();
-        System.out.println("Thread:" + Thread.currentThread().getName() + " Success cnt:" + numSuccessfulReqs.get() + "Status:" + res.getStatusCode());
-        return;
-      } catch (ApiException e) {
-        System.out.println("Consumer failed to send request: " + e.getCode() + ": " + e.getResponseBody() + ".request.Request details:"
-            + request.getSwipeDir() + " " + request.getBody().toString() + ". Go retry");
-        retry --;
-      }
-    }
-
-    numFailedReqs.getAndIncrement();
-  }
+//  /**
+//   * Execute a single POST request. If failed, retry up to 5 times before counting it as a failed request.
+//   * */
+//  public static boolean sendSingleRequest(Request request, SwipeApi swipeApi, AtomicInteger numSuccessfulReqs, AtomicInteger numFailedReqs) {
+//    int retry = MAX_RETRY;
+//
+//    while (retry > 0) {
+//      try {
+//        ApiResponse res = swipeApi.swipeWithHttpInfo(request.getBody(), request.getSwipeDir());
+//        numSuccessfulReqs.getAndIncrement();
+//        System.out.println("Thread:" + Thread.currentThread().getName() + " Success cnt:" + numSuccessfulReqs.get() + "Status:" + res.getStatusCode());
+//        return true;
+//      } catch (ApiException e) {
+//        System.out.println("Consumer failed to send request: " + e.getCode() + ": " + e.getResponseBody() + ".request.Request details:"
+//            + request.getSwipeDir() + " " + request.getBody().toString() + ". Go retry");
+//        retry --;
+//      }
+//    }
+//
+//    numFailedReqs.getAndIncrement();
+//    return false;
+//  }
 }
