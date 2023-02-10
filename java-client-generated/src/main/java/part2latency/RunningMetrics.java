@@ -87,4 +87,30 @@ public class RunningMetrics {
   public Map<Integer, Integer> getStartTimeGroupCount() {
     return this.startTimeGroupCount;
   }
+
+
+  public float calPercentileLatency(int percentile) {
+    int[] latencyGroupCount = this.getLatencyGroupCount();
+    int minLatency = this.getMinLatency();
+    int numTotalRecord = this.getNumTotalRecord();
+    float bucketSize = this.getBucketSize();
+
+    float accumulatePercentage = 0;
+    int i = -1;
+    // System.out.println("accup: " + accumulatePercentage + "targetPercentile:" +  percentile/100f);
+    while (accumulatePercentage < percentile / 100f) {
+      accumulatePercentage += (float) latencyGroupCount[++i] / numTotalRecord;
+    }
+    // i = 0: target percentile value falls in the 0th index group
+    // System.out.println("i:" + i);
+    float lower = minLatency + bucketSize * i;
+    float upper = lower + bucketSize;
+
+    // Assume even distribution:
+    // (upper - pLatency) / bucketSize =
+    // (accumulatePercentage - percentile/100) / (latencyGroupCount[i] / numTotalRecord)
+
+    float pLatency = upper - bucketSize * (accumulatePercentage - percentile/100f) / ((float)latencyGroupCount[i] / numTotalRecord);
+    return pLatency;
+  }
 }

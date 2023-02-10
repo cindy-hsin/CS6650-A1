@@ -52,10 +52,10 @@ public class SendRequestLessBlockThread extends AbsSendRequestThread implements 
           // System.out.println("Thread:" + Thread.currentThread().getName() + " Successfully sent a request. " + " Local Success cnt:" + localNumOfSuccessfulReqs + " Taken cnt:" + this.numTakenReqs.get());
         } else {
           localNumOfFailedReqs++;
-          System.out.println("Thread:" + Thread.currentThread().getName() + " Failed to sent a request.");
+          //System.out.println("Thread:" + Thread.currentThread().getName() + " Failed to sent a request.");
         }
       }
-      System.out.println(" ==== Thread:" + Thread.currentThread().getName() + " Finished batch reqs. Keep taking. Local Success cnt:" + localNumOfSuccessfulReqs + " Taken cnt:" + this.numTakenReqs.get() + " =====");
+      //System.out.println(" ==== Thread:" + Thread.currentThread().getName() + " Finished batch reqs. Keep taking. Local Success cnt:" + localNumOfSuccessfulReqs + " Taken cnt:" + this.numTakenReqs.get() + " =====");
     }
 
     this.numSuccessfulReqs.getAndAdd(localNumOfSuccessfulReqs);
@@ -77,11 +77,11 @@ public class SendRequestLessBlockThread extends AbsSendRequestThread implements 
     while (retry > 0) {
       try {
         ApiResponse res = swipeApi.swipeWithHttpInfo(request.getBody(), request.getSwipeDir());
-        System.out.println("Thread:" + Thread.currentThread().getName() + " Success cnt:" + numSuccessfulReqs.get() + "Status:" + res.getStatusCode());
+        // System.out.println("Thread:" + Thread.currentThread().getName() + " Success cnt:" + numSuccessfulReqs.get() + "Status:" + res.getStatusCode());
 
         return true;
       } catch (ApiException e) {
-        System.out.println("Consumer failed to send request: " + e.getCode() + ": " + e.getResponseBody() + ".request.Request details:"
+        System.out.println("Failed to send request: " + e.getCode() + ": " + e.getResponseBody() + ".request.Request details:"
             + request.getSwipeDir() + " " + request.getBody().toString() + ". Go retry");
         retry --;
       }

@@ -8,8 +8,16 @@ public class LoadTestConfig {
 
   public static final int MAX_RETRY = 5;
 
+
+  // HTTP servlets:
   // remote: "http://xxxx:8080/A1-Server_war";
   // local: "http://localhost:8080/A1_Server_war_exploded"
-  public static final String URL = "http://54.191.169.180:8080/A1-Server_war/";
+
+  // SpringBoot server:
+  // remote: http://xxxxx:8080/A1-SpringBootServer
+  // local: http://localhost:8080/A1-SpringBootServer_war
+
+
+  public static final String URL = "http://54.188.2.127:8080/A1-SpringBootServer";
 
 }

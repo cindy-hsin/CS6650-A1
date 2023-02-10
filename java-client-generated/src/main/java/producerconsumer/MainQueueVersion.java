@@ -42,9 +42,12 @@ public class MainQueueVersion {
     pLatch.await();
     cLatch.await();
     long endTime = System.currentTimeMillis();
-    System.out.println("multi-thread total time:" + (endTime - startTime) + "ms");
+    float wallTime = (endTime - startTime)/1000f;
     System.out.println("Successful Requests:" + numSuccessfulReqs);
     System.out.println("Unsuccessful Requests:" + numFailedReqs);
+    System.out.println("Number of Threads: " + LoadTestConfig.NUM_THREADS);
+    System.out.println("Multi-thread wall time:" + wallTime + "s");
+    System.out.println("Throughput: " + numSuccessfulReqs.get() / wallTime + " req/s");
 
   }
 }

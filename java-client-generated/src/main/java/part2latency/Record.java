@@ -6,11 +6,14 @@ public class Record {
   private int latency;   // unit: ms
   private int responseCode;
 
-  public Record(long startTime, RequestType requestType, int latency, int responseCode) {
+  private String senderThreadName;  // sent by which thread
+
+  public Record(long startTime, RequestType requestType, int latency, int responseCode, String senderThreadName) {
     this.startTime = startTime;
     this.requestType = requestType;
     this.latency = latency;
     this.responseCode = responseCode;
+    this.senderThreadName = senderThreadName;
   }
 
   public long getStartTime() {
@@ -29,11 +32,17 @@ public class Record {
     return responseCode;
   }
 
+  public String getSenderThreadName() {
+    return senderThreadName;
+  }
+
   @Override
   public String toString() {
     return startTime +
         "," + requestType +
         "," + latency +
-        "," + responseCode;
+        "," + responseCode +
+        "," + senderThreadName
+        ;
   }
 }

@@ -11,19 +11,24 @@ public class MainLessBlockingVersion {
     CountDownLatch latch = new CountDownLatch(LoadTestConfig.NUM_THREADS);
     final AtomicInteger numSuccessfulReqs = new AtomicInteger(0);
     final AtomicInteger numFailedReqs = new AtomicInteger(0);
-    final AtomicInteger numReqsTaken = new AtomicInteger(0);
+    final AtomicInteger numTakenReqs = new AtomicInteger(0);
     long startTime = System.currentTimeMillis();
 
     for (int i = 0; i < LoadTestConfig.NUM_THREADS; i++) {
       Runnable thread = new SendRequestLessBlockThread(latch, numSuccessfulReqs, numFailedReqs,
-          numReqsTaken);
+          numTakenReqs);
       new Thread(thread).start();
     }
 
     latch.await();
     long endTime = System.currentTimeMillis();
-    System.out.println("multi-thread total time:" + (endTime - startTime) + "ms");
+    float wallTime = (endTime - startTime)/1000f;
     System.out.println("Successful Requests:" + numSuccessfulReqs);
     System.out.println("Unsuccessful Requests:" + numFailedReqs);
+    System.out.println("Number of Threads: " + LoadTestConfig.NUM_THREADS);
+    System.out.println("Multi-thread wall time:" + wallTime + "s");
+    System.out.println("Throughput: " + numSuccessfulReqs.get() / wallTime + " req/s");
+
+
   }
 }

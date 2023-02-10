@@ -34,7 +34,7 @@ public class Main {
     final AtomicInteger numSuccessfulReqs = new AtomicInteger(0);
     final AtomicInteger numFailedReqs = new AtomicInteger(0);
 
-    BlockingQueue<Pair> recordsBuffer = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
+    BlockingQueue<List<Record>> recordsBuffer = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
 
     startTime = System.currentTimeMillis();
     endTime = null;
@@ -50,19 +50,20 @@ public class Main {
 
 
     int numRecordListsTaken = 0;
-    List<Pair> inMemoryAllRecords = new ArrayList<>();
+    List<Record> inMemoryAllRecords = new ArrayList<>();
     // Map<String, Integer> numWrittenRecords = new HashMap<>();
     while (numRecordListsTaken < LoadTestConfig.NUM_THREADS || endTime == null) {
       if (recordsBuffer.size() > 0) {
         // take from buffer
-        Pair threadRecords = recordsBuffer.take(); // Might throw InterruptedException
+        List<Record> threadRecords = recordsBuffer.take(); // Might throw InterruptedException
         numRecordListsTaken ++;
         // System.out.println("Taken thread records from queue: " + threadRecords.getThreadId() + ": " + threadRecords.getRecords().size());
-        // For each record: Update, max, min, sum; increment count to time group (starting at which second)
-        updateRunningMetrics(threadRecords.getRecords());
-        inMemoryAllRecords.add(threadRecords);
+        // Iterate through each record: Update, max, min, sum; increment count to time group (starting at which second)
+        updateRunningMetrics(threadRecords);
+        inMemoryAllRecords.addAll(threadRecords); // FOR TESTING PURPOSE   // TODO: Comment out
+//        inMemoryAllRecords.add();
         // numWrittenRecords.put(threadRecords.getThreadId(),
-        writeAllRecords(threadRecords.getThreadId(),threadRecords.getRecords());
+        writeAllRecords(threadRecords);
 
       } else if  (latch.getCount() == 0) { // TODO: getCount typically used for testing purpose??
         // Mark endTime
@@ -74,7 +75,7 @@ public class Main {
     // endTime might contain one unnecessary FileWrite time.
     // CASE1:
     // When the Last thread put a list to queue and call latch.countDown(),
-    // if main thread happens to be in the wallTimeLatch block, then endTime will be accurately marked,
+    // if main thread happens to be in the latch block, then endTime will be accurately marked,
     // and then main thread goes on to take the last list from queue. END while loop.
 
     // CASE2:
@@ -91,44 +92,34 @@ public class Main {
     writeToCsvByStartTime(runningMetrics.getStartTimeGroupCount());
 
 
-    System.out.println("Num of Threads: " + LoadTestConfig.NUM_THREADS);
-//    System.out.println("StartTime: " + startTime);
-//    System.out.println("EndTime: " + endTime);
-    System.out.println("Multi-threaded Wall Time:" + (endTime - startTime) + "ms");
+    float wallTime = (endTime - startTime)/1000f;
     System.out.println("Successful Requests:" + numSuccessfulReqs);
     System.out.println("Unsuccessful Requests:" + numFailedReqs);
-
+    System.out.println("Number of Threads: " + LoadTestConfig.NUM_THREADS);
+    System.out.println("Multi-thread wall time:" + wallTime + "s");
+    System.out.println("Throughput: " + numSuccessfulReqs.get() / wallTime + " req/s");
+    System.out.println("\n");
 
     System.out.println("Mean Response Time (ms): " + (float)runningMetrics.getSumLatency() / runningMetrics.getNumTotalRecord());
-    System.out.println("Median Response Time (ms): " + calPercentileLatency(50));
+    System.out.println("Median Response Time (ms): " + runningMetrics.calPercentileLatency(50));
     System.out.println("Throughput (req/s): " + (float)(numSuccessfulReqs.get()) / (endTime - startTime) * 1000);
-    System.out.println("99th Percentile Response Time: " + calPercentileLatency(99));
+    System.out.println("99th Percentile Response Time: " + runningMetrics.calPercentileLatency(99));
     System.out.println("Min Response Time (ms): " + runningMetrics.getMinLatency());
     System.out.println("Max Response Time (ms): " + runningMetrics.getMaxLatency());
 
 
-    int[] latencyGroupCount = runningMetrics.getLatencyGroupCount();
-    for (int i = 0; i < RunningMetrics.NUM_BUCKET; i++) {
-      System.out.println("GroupId: " + i + "; " + latencyGroupCount[i]);
-    }
-    System.out.println(runningMetrics.getLatencyGroupCount());
 
-    /**
-     * Ues InMemory Collection & DescriptiveStatistics class
-     * to calculate the correct statistics (for testing)
-     */
-    DescriptiveStatistics ds = new DescriptiveStatistics();
 
-    for (Pair pair: inMemoryAllRecords) {
-      for (Record record : pair.getRecords()) {
-        ds.addValue(record.getLatency());
-      }
-    }
-    System.out.println(ds.getMean());
-    System.out.println(ds.getMax());
-    System.out.println(ds.getMin());
-    System.out.println(ds.getPercentile(50));
-    System.out.print(ds.getPercentile(99));
+    // TEST:
+    testCalcStatistics(inMemoryAllRecords);
+
+//    int[] latencyGroupCount = runningMetrics.getLatencyGroupCount();
+//    for (int i = 0; i < RunningMetrics.NUM_BUCKET; i++) {
+//      System.out.println("GroupId: " + i + "; " + latencyGroupCount[i]);
+//    }
+//    System.out.println(runningMetrics.getLatencyGroupCount());
+
+
 
   }
 
@@ -145,41 +136,15 @@ public class Main {
     }
   }
 
-  // TODO: Move to RunningMetrics class
-  private static float calPercentileLatency(int percentile) {
-    int[] latencyGroupCount = runningMetrics.getLatencyGroupCount();
-    int minLatency = runningMetrics.getMinLatency();
-    int numTotalRecord = runningMetrics.getNumTotalRecord();
-    float bucketSize = runningMetrics.getBucketSize();
-
-    float accumulatePercentage = 0;
-    int i = -1;
-    System.out.println("accup: " + accumulatePercentage + "targetPercentile:" +  percentile/100f);
-    while (accumulatePercentage < percentile / 100f) {
-      accumulatePercentage += (float) latencyGroupCount[++i] / numTotalRecord;
-    }
-    // i = 0: target percentile value falls in the 0th index group
-    System.out.println("i:" + i);
-    float lower = minLatency + bucketSize * i;
-    float upper = lower + bucketSize;
-
-    // Assume even distribution:
-    // (upper - pLatency) / bucketSize =
-    // (accumulatePercentage - percentile/100) / (latencyGroupCount[i] / numTotalRecord)
-
-    float pLatency = upper - bucketSize * (accumulatePercentage - percentile/100f) / ((float)latencyGroupCount[i] / numTotalRecord);
-    return pLatency;
-  }
 
   // TESTING PURPOSE
-  private static void writeAllRecords(String threadId, List<Record> records) {
-    System.out.println("From Queue: Started writing records of thread:" + threadId);
+  private static void writeAllRecords(List<Record> records) {
 //    int numRecordsInThread = 0;
     try (BufferedWriter outputFile = new BufferedWriter(new FileWriter(ALL_RECORDS_CSV, true))) {
       String line;
 
       for (Record record: records) {
-        line = record.toString() + "," + threadId;
+        line = record.toString();
         outputFile.write(line + System.lineSeparator());
 //        numRecordsInThread ++;
       }
@@ -190,10 +155,6 @@ public class Main {
       System.out.println("Error when writing to CSV " + ALL_RECORDS_CSV + ": " + ioe.getMessage());
       ioe.printStackTrace();
     }
-
-    System.out.println("From Queue: Finished writing records of thread:" + threadId);
-//    return numRecordsInThread;
-
   }
 
   private static void readCsvToGroupLatency() {
@@ -237,4 +198,27 @@ public class Main {
       ioe.printStackTrace();
     }
   }
+
+  /**
+   * Ues InMemory Collection & DescriptiveStatistics class
+   * to calculate the correct statistics (for testing)
+   */
+  private static void testCalcStatistics( List<Record> inMemoryAllRecords) {
+
+    DescriptiveStatistics ds = new DescriptiveStatistics();
+
+    for (Record record: inMemoryAllRecords) {
+      ds.addValue(record.getLatency());
+    }
+    System.out.println("====== TEST: Statistics calculated with in memory collection and DescriptiveStatistics ========");
+    System.out.println("Mean Response Time (ms): " + ds.getMean());
+    System.out.println("Median Response Time (ms): "+ds.getPercentile(50));
+    System.out.print("99th Percentile Response Time: " + ds.getPercentile(99));
+    System.out.println("Min Response Time (ms): "+ds.getMin());
+    System.out.println("Max Response Time (ms): " + ds.getMax());
+
+
+
+  }
+
 }
