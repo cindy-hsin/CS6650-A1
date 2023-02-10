@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 
-public class Main {
+public class MainPart2 {
   private static final int QUEUE_CAPACITY = LoadTestConfig.NUM_THREADS;
   private static final String ALL_RECORDS_CSV = "AllRecords.csv";
   private static final String START_TIME_GROUP_CSV = "StartTimeGroupedRequests.csv";
@@ -51,26 +51,20 @@ public class Main {
 
     int numRecordListsTaken = 0;
     List<Record> inMemoryAllRecords = new ArrayList<>();
-    // Map<String, Integer> numWrittenRecords = new HashMap<>();
     while (numRecordListsTaken < LoadTestConfig.NUM_THREADS || endTime == null) {
       if (recordsBuffer.size() > 0) {
         // take from buffer
         List<Record> threadRecords = recordsBuffer.take(); // Might throw InterruptedException
         numRecordListsTaken ++;
-        // System.out.println("Taken thread records from queue: " + threadRecords.getThreadId() + ": " + threadRecords.getRecords().size());
         // Iterate through each record: Update, max, min, sum; increment count to time group (starting at which second)
         updateRunningMetrics(threadRecords);
-        inMemoryAllRecords.addAll(threadRecords); // FOR TESTING PURPOSE   // TODO: Comment out
-//        inMemoryAllRecords.add();
-        // numWrittenRecords.put(threadRecords.getThreadId(),
         writeAllRecords(threadRecords);
-
-      } else if  (latch.getCount() == 0) { // TODO: getCount typically used for testing purpose??
+        // inMemoryAllRecords.addAll(threadRecords); // FOR TESTING PURPOSE
+      } else if  (latch.getCount() == 0) {
         // Mark endTime
         endTime = System.currentTimeMillis();
       }
     }
-
 
     // endTime might contain one unnecessary FileWrite time.
     // CASE1:
@@ -85,10 +79,10 @@ public class Main {
     // In this case, the endTime will be longer than the actual request-sending endTime, by a difference of
     // WRITE_ONE_LIST_TO_CSV TIME.
 
-    readCsvToGroupLatency();     // Group records by latency bucket
+    // Group records by latency bucket
+    readCsvToGroupLatency();
 
     // Write the startTimeGroupCount out to CSV for plotting
-
     writeToCsvByStartTime(runningMetrics.getStartTimeGroupCount());
 
 
@@ -107,19 +101,8 @@ public class Main {
     System.out.println("Min Response Time (ms): " + runningMetrics.getMinLatency());
     System.out.println("Max Response Time (ms): " + runningMetrics.getMaxLatency());
 
-
-
-
     // TEST:
-    testCalcStatistics(inMemoryAllRecords);
-
-//    int[] latencyGroupCount = runningMetrics.getLatencyGroupCount();
-//    for (int i = 0; i < RunningMetrics.NUM_BUCKET; i++) {
-//      System.out.println("GroupId: " + i + "; " + latencyGroupCount[i]);
-//    }
-//    System.out.println(runningMetrics.getLatencyGroupCount());
-
-
+    // testCalcStatistics(inMemoryAllRecords);
 
   }
 
@@ -136,17 +119,13 @@ public class Main {
     }
   }
 
-
-  // TESTING PURPOSE
   private static void writeAllRecords(List<Record> records) {
-//    int numRecordsInThread = 0;
     try (BufferedWriter outputFile = new BufferedWriter(new FileWriter(ALL_RECORDS_CSV, true))) {
       String line;
 
       for (Record record: records) {
         line = record.toString();
         outputFile.write(line + System.lineSeparator());
-//        numRecordsInThread ++;
       }
     } catch (FileNotFoundException fnfe) {
       System.out.println("*** Write: CSV file was not found : " + fnfe.getMessage());
@@ -165,8 +144,6 @@ public class Main {
         String[] record = line.split(",");
         if (Integer.valueOf(record[3]).equals(LoadTestConfig.SUCCESS_CODE)) {
           int latency = Integer.valueOf(record[2]);
-          System.out.println("latency:" + latency);
-          System.out.println("max, min:" + runningMetrics.getMaxLatency() + " " + runningMetrics.getMinLatency());
           runningMetrics.incrementLatencyGroupCount(latency);
         }
       }
@@ -201,7 +178,7 @@ public class Main {
 
   /**
    * Ues InMemory Collection & DescriptiveStatistics class
-   * to calculate the correct statistics (for testing)
+   * to calculate the correct statistics (Only for TESTING PURPOSE)
    */
   private static void testCalcStatistics( List<Record> inMemoryAllRecords) {
 
@@ -216,9 +193,6 @@ public class Main {
     System.out.print("99th Percentile Response Time: " + ds.getPercentile(99));
     System.out.println("Min Response Time (ms): "+ds.getMin());
     System.out.println("Max Response Time (ms): " + ds.getMax());
-
-
-
   }
 
 }

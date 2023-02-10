@@ -78,7 +78,6 @@ public class SendRequestLessBlockThread extends AbsSendRequestThread implements 
       try {
         ApiResponse res = swipeApi.swipeWithHttpInfo(request.getBody(), request.getSwipeDir());
         // System.out.println("Thread:" + Thread.currentThread().getName() + " Success cnt:" + numSuccessfulReqs.get() + "Status:" + res.getStatusCode());
-
         return true;
       } catch (ApiException e) {
         System.out.println("Failed to send request: " + e.getCode() + ": " + e.getResponseBody() + ".request.Request details:"

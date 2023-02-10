@@ -97,12 +97,11 @@ public class RunningMetrics {
 
     float accumulatePercentage = 0;
     int i = -1;
-    // System.out.println("accup: " + accumulatePercentage + "targetPercentile:" +  percentile/100f);
+
     while (accumulatePercentage < percentile / 100f) {
       accumulatePercentage += (float) latencyGroupCount[++i] / numTotalRecord;
     }
     // i = 0: target percentile value falls in the 0th index group
-    // System.out.println("i:" + i);
     float lower = minLatency + bucketSize * i;
     float upper = lower + bucketSize;
 

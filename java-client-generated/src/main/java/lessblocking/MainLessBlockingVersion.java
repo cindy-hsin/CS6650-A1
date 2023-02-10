@@ -29,6 +29,5 @@ public class MainLessBlockingVersion {
     System.out.println("Multi-thread wall time:" + wallTime + "s");
     System.out.println("Throughput: " + numSuccessfulReqs.get() / wallTime + " req/s");
 
-
   }
 }

@@ -26,5 +26,7 @@ public class MainAverageVersion {
     System.out.println("Number of Threads: " + LoadTestConfig.NUM_THREADS);
     System.out.println("Multi-thread wall time:" + wallTime + "s");
     System.out.println("Throughput: " + numSuccessfulReqs.get() / wallTime + " req/s");
+
+
   }
 }

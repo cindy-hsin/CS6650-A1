@@ -34,7 +34,7 @@ public class AbsSendRequestThread implements ISendRequestThread {
       try {
         ApiResponse res = swipeApi.swipeWithHttpInfo(request.getBody(), request.getSwipeDir());
         numSuccessfulReqs.getAndIncrement();
-        System.out.println("Thread:" + Thread.currentThread().getName() + " Success cnt:" + numSuccessfulReqs.get() + "Status:" + res.getStatusCode());
+        System.out.println("Thread:" + Thread.currentThread().getName() + " Success cnt:" + numSuccessfulReqs.get() + " Status:" + res.getStatusCode());
         return true;
       } catch (ApiException e) {
         System.out.println("Failed to send request: " + e.getCode() + ": " + e.getResponseBody() + ".request.Request details:"

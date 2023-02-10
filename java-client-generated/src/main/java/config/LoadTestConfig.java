@@ -18,6 +18,6 @@ public class LoadTestConfig {
   // local: http://localhost:8080/A1-SpringBootServer_war
 
 
-  public static final String URL = "http://54.188.2.127:8080/A1-SpringBootServer";
+  public static final String URL = "http://52.26.44.69:8080/A1-Server_war";
 
 }
